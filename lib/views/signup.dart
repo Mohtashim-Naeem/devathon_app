@@ -1,61 +1,67 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:devathon_app/constants/colors.dart';
-import 'package:devathon_app/views/home.dart';
-import 'package:devathon_app/views/signup.dart';
+import 'package:devathon_app/views/login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../constants/colors.dart';
 import '../widgets/custom_field.dart';
 
-class Login extends StatefulWidget {
-  const Login({super.key});
+class SignUp extends StatefulWidget {
+  const SignUp({super.key});
 
   @override
-  State<Login> createState() => _LoginState();
+  State<SignUp> createState() => _SignUpState();
 }
 
-class _LoginState extends State<Login> {
-  TextEditingController _userIdControl = TextEditingController();
-
+class _SignUpState extends State<SignUp> {
+  TextEditingController _name = TextEditingController();
+  TextEditingController _emailControl = TextEditingController();
   TextEditingController _passwordControl = TextEditingController();
-  bool isLogingIn = false;
 
-  login() async {
-    try {
-      isLogingIn = true;
-      setState(() {});
-
-      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: _userIdControl.text, password: _passwordControl.text);
-      await ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        backgroundColor: Colors.blue,
-        content: Text('Login Successful!'),
-      ));
-      print('============${credential.user!.uid}========');
-
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => Home(
-                  // documentId:  FirebaseFirestore.instance.doc(_),
-                  )));
-      print('============${credential.user!.uid}========');
-    } catch (e) {
-      isLogingIn = false;
-      setState(() {});
-
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        backgroundColor: Colors.redAccent,
-        content: Text('Wrong Password or Email'),
-      ));
-      print('I am error ============$e===========');
-    }
-  }
+  bool isSignUp = false;
 
   @override
   Widget build(BuildContext context) {
     var height = MediaQuery.of(context).size.height;
     var width = MediaQuery.of(context).size.width;
+
+    signup() async {
+      try {
+        isSignUp = true;
+        setState(() {});
+        final credential =
+            await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: _emailControl.text,
+          password: _passwordControl.text,
+        );
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(credential.user!.uid)
+            .set({
+          // 'name': _name.text,
+          // 'Father name': _f_name.text,
+          // 'email': credential.user!.email,
+          // 'gender': _gender.text,
+          // 'age': _age.text,
+          'uid': _name,
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Account created successfuly'),
+          backgroundColor: AppColors.blurColor,
+        ));
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => Login()));
+      } catch (e) {
+        isSignUp = false;
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Something went wrong')));
+
+        print('I am error ============$e===========');
+      }
+    }
+
     return SafeArea(
       child: Scaffold(
         body: Padding(
@@ -66,15 +72,12 @@ class _LoginState extends State<Login> {
                 Center(
                   child: Image.asset('assets/images/Login-rafiki 1.png'),
                 ),
-                Hero(
-                  tag: 'main',
-                  child: Text(
-                    'Login',
-                    style: TextStyle(
-                      color: AppColors.grey,
-                      fontSize: width * 0.1,
-                      fontWeight: FontWeight.w500,
-                    ),
+                Text(
+                  'Registration',
+                  style: TextStyle(
+                    color: AppColors.grey,
+                    fontSize: width * 0.1,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 SizedBox(
@@ -83,7 +86,7 @@ class _LoginState extends State<Login> {
                 Row(
                   children: [
                     Text(
-                      'Username:',
+                      'Your Name:',
                       style: TextStyle(
                         color: AppColors.grey,
                         fontSize: 15,
@@ -96,7 +99,7 @@ class _LoginState extends State<Login> {
                   ],
                 ),
                 CustomTextField(
-                    controller: _userIdControl,
+                    controller: _name,
                     labeltext: 'Enter your Username',
                     icon: Icon(Icons.person),
                     size: 12),
@@ -104,7 +107,7 @@ class _LoginState extends State<Login> {
                 Row(
                   children: [
                     Text(
-                      'Password',
+                      'Your Email',
                       style: TextStyle(
                         color: AppColors.grey,
                         fontSize: 15,
@@ -114,17 +117,40 @@ class _LoginState extends State<Login> {
                     SizedBox(height: 10),
                   ],
                 ),
+                SizedBox(height: 10),
+
                 CustomTextField(
-                    controller: _passwordControl,
-                    labeltext: '...................',
+                    controller: _emailControl,
+                    labeltext: 'Enter your email',
                     icon: Icon(Icons.send),
                     size: 12),
+                SizedBox(
+                  height: 15,
+                ),
+                Row(
+                  children: [
+                    Text(
+                      'Your Password',
+                      style: TextStyle(
+                        color: AppColors.grey,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10),
+                CustomTextField(
+                    controller: _passwordControl,
+                    labeltext: '.................',
+                    icon: Icon(Icons.send),
+                    size: 20),
                 SizedBox(height: height * 0.025),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Don't have an account? ",
+                      "Already Registered?",
                       style: TextStyle(
                           color: AppColors.grey,
                           fontSize: 12,
@@ -132,13 +158,11 @@ class _LoginState extends State<Login> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: ((context) => SignUp())));
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: ((context) => Login())));
                       },
                       child: Text(
-                        ' Sign Up',
+                        ' Login',
                         style: TextStyle(
                             color: AppColors.purple,
                             fontSize: 14,
@@ -166,13 +190,15 @@ class _LoginState extends State<Login> {
                     ),
                   ],
                 ),
-                SizedBox(
-                  height: height * 0.08,
-                ),
+                // SizedBox(
+                //   height: height * 0.0,
+                // ),
                 Hero(
-                  tag: 'auth',
+                  tag: 'main',
                   child: ElevatedButton(
-                      onPressed: login,
+                      onPressed: () {
+                        signup();
+                      },
                       style: ElevatedButton.styleFrom(
                           elevation: 30,
                           shadowColor: AppColors.buttonShadow,
@@ -181,7 +207,7 @@ class _LoginState extends State<Login> {
                             borderRadius: BorderRadius.circular(40),
                           ),
                           fixedSize: Size(width * 0.85, 70)),
-                      child: isLogingIn
+                      child: isSignUp
                           ? CircularProgressIndicator(
                               color: Colors.white,
                             )
